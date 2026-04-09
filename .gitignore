@@ -1,0 +1,30 @@
+# Python
+venv/
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+dist/
+build/
+
+# Django
+db.sqlite3
+staticfiles/
+
+# Node
+node_modules/
+
+# Environment
+.env
+.env.local
+.env.production
+
+# Kubernetes secrets
+k8s/secret.yaml
+
+# OS
+.DS_Store
+Thumbs.db
+
+# VS Code
+.vscode/
