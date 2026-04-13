@@ -1,0 +1,26 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: django-migrate
+  namespace: polymer2parquet
+spec:
+  template:
+    spec:
+      containers:
+        - name: django-migrate
+          image: us-central1-docker.pkg.dev/polymer2parquet/polymer2parquet/polymer2parquet-backend:latest
+          command: ["python", "manage.py", "migrate"]
+          envFrom:
+            - configMapRef:
+                name: polymer2parquet-config
+            - secretRef:
+                name: polymer2parquet-secrets
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+      restartPolicy: Never
+  backoffLimit: 3

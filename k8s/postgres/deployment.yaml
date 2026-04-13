@@ -23,9 +23,17 @@ spec:
                 name: polymer2parquet-secrets
           ports:
             - containerPort: 5432
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
           volumeMounts:
             - mountPath: /var/lib/postgresql/data
               name: postgres-storage
+              subPath: pgdata
           readinessProbe:
             exec:
               command:
@@ -36,13 +44,6 @@ spec:
                 - polymer2parquetdb
             initialDelaySeconds: 10
             periodSeconds: 5
-          resources:
-            requests:
-              memory: "256Mi"
-              cpu: "250m"
-            limits:
-              memory: "512Mi"
-              cpu: "500m"
       volumes:
         - name: postgres-storage
           persistentVolumeClaim:

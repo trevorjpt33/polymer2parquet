@@ -4,7 +4,7 @@ metadata:
   name: frontend
   namespace: polymer2parquet
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       app: frontend
@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: REGION-docker.pkg.dev/PROJECT_ID/polymer2parquet/polymer2parquet-frontend:latest
+          image: us-central1-docker.pkg.dev/polymer2parquet/polymer2parquet/polymer2parquet-frontend:latest
           ports:
             - containerPort: 80
           readinessProbe:

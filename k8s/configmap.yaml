@@ -7,5 +7,5 @@ data:
   POSTGRES_DB: polymer2parquetdb
   POSTGRES_HOST: postgres-service
   POSTGRES_PORT: "5432"
-  ALLOWED_HOSTS: "localhost,127.0.0.1"
+  ALLOWED_HOSTS: "*"
   DEBUG: "False"

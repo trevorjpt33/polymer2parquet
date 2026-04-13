@@ -28,3 +28,7 @@ Thumbs.db
 
 # VS Code
 .vscode/
+terraform/.terraform/
+terraform/terraform.tfvars
+frontend/.env.production
+frontend/.env.development

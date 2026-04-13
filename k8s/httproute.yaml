@@ -17,6 +17,13 @@ spec:
     - matches:
         - path:
             type: PathPrefix
+            value: /admin
+      backendRefs:
+        - name: backend-service
+          port: 8000
+    - matches:
+        - path:
+            type: PathPrefix
             value: /
       backendRefs:
         - name: frontend-service
