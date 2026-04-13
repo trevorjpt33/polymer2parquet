@@ -32,3 +32,5 @@ terraform/.terraform/
 terraform/terraform.tfvars
 frontend/.env.production
 frontend/.env.development
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
