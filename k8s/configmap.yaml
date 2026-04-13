@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: polymer2parquet-config
+  namespace: polymer2parquet
+data:
+  POSTGRES_DB: polymer2parquetdb
+  POSTGRES_HOST: postgres-service
+  POSTGRES_PORT: "5432"
+  ALLOWED_HOSTS: "localhost,127.0.0.1"
+  DEBUG: "False"
