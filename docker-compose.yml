@@ -26,7 +26,7 @@ services:
     ports:
       - "8000:8000"
     environment:
-      DJANGO_SECRET_KEY: t@cs*axjg^-__cealj(y5o$v$lfxed#1n=dxldru0i*a3bu^(j
+      DJANGO_SECRET_KEY: your-secret-key-here
       DEBUG: "True"
       POSTGRES_DB: polymer2parquetdb
       POSTGRES_USER: polymer2parquetuser
@@ -37,6 +37,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+
+  frontend:
+    build: ./frontend
+    image: polymer2parquet-frontend:latest
+    ports:
+      - "3000:80"
+    depends_on:
+      - backend
 
 volumes:
   postgres_data:
