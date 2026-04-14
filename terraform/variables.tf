@@ -10,7 +10,7 @@ variable "region" {
 
 variable "zone" {
   description = "GCP Zone"
-  default     = "us-central1-a"
+  default     = "us-central1-f"
 }
 
 variable "cluster_name" {

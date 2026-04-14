@@ -15,6 +15,12 @@ resource "google_container_cluster" "polymer2parquet_cluster" {
   }
 
   deletion_protection = false
+
+  timeouts {
+    create = "60m"
+    update = "60m"
+    delete = "60m"
+  }
 }
 
 resource "google_container_node_pool" "polymer2parquet_nodes" {
@@ -25,8 +31,9 @@ resource "google_container_node_pool" "polymer2parquet_nodes" {
   node_count = 2
 
   node_config {
-    machine_type = "e2-medium"
-    disk_size_gb = 50
+    machine_type    = "e2-small"
+    disk_size_gb    = 30
+    service_account = google_service_account.polymer2parquet_sa.email
 
     oauth_scopes = [
       "https://www.googleapis.com/auth/cloud-platform"
