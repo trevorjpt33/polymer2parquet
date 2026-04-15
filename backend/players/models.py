@@ -30,10 +30,13 @@ class Award(models.Model):
         ("ALL_NBA_1", "All-NBA First Team"),
         ("ALL_NBA_2", "All-NBA Second Team"),
         ("ALL_NBA_3", "All-NBA Third Team"),
+        ("ALL_DEF_NBA_1", "All-Defense NBA First Team"),
+        ("ALL_DEF_NBA_2", "All-Defense NBA Second Team"),
         ("ALL_STAR", "All-Star Selection"),
         ("CHAMP", "Championship"),
         ("ALL_ABA_1", "All-ABA First Team"),
         ("ALL_ABA_2", "All-ABA Second Team"),
+        ("ALL_DEF_ABA_1", "All-Defense ABA First Team"),
         ("ABA_MVP", "ABA Most Valuable Player"),
         ("ABA_ROY", "ABA Rookie of the Year"),
     ]
