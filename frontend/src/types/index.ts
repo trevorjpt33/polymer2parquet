@@ -1,8 +1,9 @@
 export interface Player {
   id: number;
+  player_id: string;
   first_name: string;
   last_name: string;
-  position: "PG" | "SG" | "SF" | "PF" | "C" | "";
+  position: string;
   birth_date: string | null;
   country: string;
   college: string;
@@ -14,9 +15,10 @@ export interface Player {
 
 export interface PlayerList {
   id: number;
+  player_id: string;
   first_name: string;
   last_name: string;
-  position: "PG" | "SG" | "SF" | "PF" | "C" | "";
+  position: string;
   country: string;
   is_active: boolean;
 }

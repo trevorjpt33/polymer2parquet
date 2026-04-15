@@ -21,6 +21,7 @@ class PlayerSerializer(serializers.ModelSerializer):
         model = Player
         fields = [
             "id",
+            "player_id",
             "first_name",
             "last_name",
             "position",
@@ -40,6 +41,7 @@ class PlayerListSerializer(serializers.ModelSerializer):
         model = Player
         fields = [
             "id",
+            "player_id",
             "first_name",
             "last_name",
             "position",

@@ -2,17 +2,10 @@ from django.db import models
 
 
 class Player(models.Model):
-    POSITION_CHOICES = [
-        ("PG", "Point Guard"),
-        ("SG", "Shooting Guard"),
-        ("SF", "Small Forward"),
-        ("PF", "Power Forward"),
-        ("C", "Center"),
-    ]
-
+    player_id = models.CharField(max_length=20, unique=True, blank=True, null=True, default=None)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    position = models.CharField(max_length=2, choices=POSITION_CHOICES, blank=True)
+    position = models.CharField(max_length=10, blank=True)
     birth_date = models.DateField(null=True, blank=True)
     country = models.CharField(max_length=100, blank=True)
     college = models.CharField(max_length=100, blank=True)
