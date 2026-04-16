@@ -49,14 +49,19 @@ class Command(BaseCommand):
                     "vorp":       self._float(row.get("vorp")),
                 }
 
+        self.stdout.write("Pre-caching players and teams...")
+        player_cache = {p.player_id: p.id for p in Player.objects.only("id", "player_id")}
+        team_cache = {(t.abbreviation, t.league): t.id for t in Team.objects.only("id", "abbreviation", "league")}
+
         self.stdout.write("Loading player seasons...")
         created = skipped = missing_player = missing_team = 0
 
-        # Clear existing player seasons
         PlayerSeason.objects.all().delete()
         self.stdout.write("Cleared existing player seasons.")
 
-        
+        batch = []
+        BATCH_SIZE = 500
+
         with open(ppg_path, encoding="utf-8") as f:
             for row in csv.DictReader(f):
                 if row["team"] in ("TOT", "2TM", "3TM", "4TM", "5TM"):
@@ -71,19 +76,14 @@ class Command(BaseCommand):
                 if league == "BAA":
                     league = "NBA"
 
-                try:
-                    player = Player.objects.get(player_id=player_id)
-                except Player.DoesNotExist:
+                player_pk = player_cache.get(player_id)
+                if not player_pk:
                     missing_player += 1
                     continue
 
-                try:
-                    team = Team.objects.get(abbreviation=team_abbr, league=league)
-                except Team.DoesNotExist:
+                team_pk = team_cache.get((team_abbr, league))
+                if not team_pk:
                     missing_team += 1
-                    self.stdout.write(
-                        self.style.WARNING(f"Team not found: {team_abbr} ({league}) — skipping")
-                    )
                     continue
 
                 adv = advanced.get((player_id, season, team_abbr), {})
@@ -94,36 +94,39 @@ class Command(BaseCommand):
                     skipped += 1
                     continue
 
-                _, was_created = PlayerSeason.objects.get_or_create(
-                    player=player,
-                    team=team,
+                batch.append(PlayerSeason(
+                    player_id=player_pk,
+                    team_id=team_pk,
                     season_year=season_year,
                     league=league,
-                    defaults={
-                        "age":                      self._int(row.get("age")),
-                        "games_played":             self._int(row.get("g")) or 0,
-                        "games_started":            self._int(row.get("gs")) or 0,
-                        "minutes_per_game":         self._float(row.get("mp_per_game")),
-                        "points_per_game":          self._float(row.get("pts_per_game")),
-                        "rebounds_per_game":        self._float(row.get("trb_per_game")),
-                        "assists_per_game":         self._float(row.get("ast_per_game")),
-                        "steals_per_game":          self._float(row.get("stl_per_game")),
-                        "blocks_per_game":          self._float(row.get("blk_per_game")),
-                        "turnovers_per_game":       self._float(row.get("tov_per_game")),
-                        "field_goal_percentage":    self._float(row.get("fg_percent")),
-                        "three_point_percentage":   self._float(row.get("x3p_percent")),
-                        "free_throw_percentage":    self._float(row.get("ft_percent")),
-                        "player_efficiency_rating": adv.get("per"),
-                        "true_shooting_percentage": adv.get("ts_percent"),
-                        "win_shares":               adv.get("ws"),
-                        "box_plus_minus":           adv.get("bpm"),
-                        "value_over_replacement":   adv.get("vorp"),
-                    }
-                )
-                if was_created:
-                    created += 1
-                else:
-                    skipped += 1
+                    age=self._int(row.get("age")),
+                    games_played=self._int(row.get("g")) or 0,
+                    games_started=self._int(row.get("gs")) or 0,
+                    minutes_per_game=self._float(row.get("mp_per_game")),
+                    points_per_game=self._float(row.get("pts_per_game")),
+                    rebounds_per_game=self._float(row.get("trb_per_game")),
+                    assists_per_game=self._float(row.get("ast_per_game")),
+                    steals_per_game=self._float(row.get("stl_per_game")),
+                    blocks_per_game=self._float(row.get("blk_per_game")),
+                    turnovers_per_game=self._float(row.get("tov_per_game")),
+                    field_goal_percentage=self._float(row.get("fg_percent")),
+                    three_point_percentage=self._float(row.get("x3p_percent")),
+                    free_throw_percentage=self._float(row.get("ft_percent")),
+                    player_efficiency_rating=adv.get("per"),
+                    true_shooting_percentage=adv.get("ts_percent"),
+                    win_shares=adv.get("ws"),
+                    box_plus_minus=adv.get("bpm"),
+                    value_over_replacement=adv.get("vorp"),
+                ))
+                created += 1
+
+                if len(batch) >= BATCH_SIZE:
+                    PlayerSeason.objects.bulk_create(batch)
+                    self.stdout.write(f"Inserted {created} seasons so far...")
+                    batch.clear()
+
+        if batch:
+            PlayerSeason.objects.bulk_create(batch)
 
         self.stdout.write(self.style.SUCCESS(
             f"Done. Created: {created} | Skipped/duplicate: {skipped} | "
