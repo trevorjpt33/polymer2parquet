@@ -39,7 +39,10 @@ services:
         condition: service_healthy
 
   frontend:
-    build: ./frontend
+    build:
+      context: ./frontend
+      args:
+        VITE_API_URL: http://localhost:3000/api
     image: polymer2parquet-frontend:latest
     ports:
       - "3000:80"
