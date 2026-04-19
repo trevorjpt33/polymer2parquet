@@ -6,6 +6,11 @@ terraform {
     }
   }
   required_version = ">= 1.0"
+
+  backend "gcs" {
+    bucket = "polymer2parquet-terraform-state"
+    prefix = "terraform/state"
+  }
 }
 
 provider "google" {
