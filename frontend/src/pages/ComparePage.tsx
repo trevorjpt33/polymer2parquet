@@ -13,7 +13,7 @@ function weightedAvg(seasons: PlayerSeasonList[], key: keyof PlayerSeasonList): 
   if (valid.length === 0) return null;
   const totalGames = valid.reduce((sum, s) => sum + s.games_played, 0);
   const weighted = valid.reduce((sum, s) => sum + (parseFloat(s[key] as string)) * s.games_played, 0);
-  return Math.round((weighted / totalGames) * 10) / 10;
+  return weighted / totalGames;
 }
 
 function sumStat(seasons: PlayerSeasonList[], key: keyof PlayerSeasonList): number {
@@ -25,12 +25,9 @@ function fmt(val: number | null, decimals = 1): string {
   return val.toFixed(decimals);
 }
 
-function countAwards(awards: Award[], types: string[]): number {
-  return awards.filter((a) => types.includes(a.award_type)).length;
-}
-
-function hasAward(awards: Award[], types: string[]): string {
-  return awards.some((a) => types.includes(a.award_type)) ? "Yes" : "—";
+function countAwardsOrDash(awards: Award[], types: string[]): string {
+  const count = awards.filter((a) => types.includes(a.award_type)).length;
+  return count > 0 ? String(count) : "—";
 }
 
 const STAT_ROWS: { label: string; getValue: (d: PlayerData) => string }[] = [
@@ -53,12 +50,11 @@ const STAT_ROWS: { label: string; getValue: (d: PlayerData) => string }[] = [
   { label: "BPM", getValue: (d) => fmt(weightedAvg(d.seasons, "box_plus_minus")) },
   { label: "VORP", getValue: (d) => fmt(sumStat(d.seasons, "value_over_replacement") || null) },
   // Accolades
-  { label: "All-Star", getValue: (d) => String(countAwards(d.awards, ["ALL_STAR"])) },
-  { label: "All-NBA", getValue: (d) => String(countAwards(d.awards, ["ALL_NBA_1", "ALL_NBA_2", "ALL_NBA_3"])) },
-  { label: "All-ABA", getValue: (d) => String(countAwards(d.awards, ["ALL_ABA_1", "ALL_ABA_2"])) },
-  { label: "MVP", getValue: (d) => hasAward(d.awards, ["MVP", "ABA_MVP"]) },
-  { label: "DPOY", getValue: (d) => hasAward(d.awards, ["DPOY"]) },
-  { label: "ROY", getValue: (d) => hasAward(d.awards, ["ROY", "ABA_ROY"]) },
+  { label: "All-Star", getValue: (d) => countAwardsOrDash(d.awards, ["ALL_STAR"]) },
+  { label: "All-NBA/ABA", getValue: (d) => countAwardsOrDash(d.awards, ["ALL_NBA_1", "ALL_NBA_2", "ALL_NBA_3", "ALL_ABA_1", "ALL_ABA_2"]) },
+  { label: "MVP", getValue: (d) => countAwardsOrDash(d.awards, ["MVP", "ABA_MVP"]) },
+  { label: "DPOY", getValue: (d) => countAwardsOrDash(d.awards, ["DPOY"]) },
+  { label: "ROY", getValue: (d) => countAwardsOrDash(d.awards, ["ROY", "ABA_ROY"]) },
 ];
 
 const SECTION_HEADERS: Record<number, string> = {
@@ -102,7 +98,16 @@ function PlayerSearch({
             <p className="font-bold text-gray-900 text-lg">
               {selected.first_name} {selected.last_name}
             </p>
-            <p className="text-sm text-gray-500">{selected.position || "—"}</p>
+            <p className="text-sm text-gray-500">
+              {selected.position ? (
+                <>
+                  <span className="font-semibold text-gray-900">{selected.position.split(",")[0]}</span>
+                  {selected.position.split(",").slice(1).join(",") && (
+                    <span className="text-gray-400">{","}{selected.position.split(",").slice(1).join(",")}</span>
+                  )}
+                </>
+              ) : "—"}
+            </p>
           </div>
           <button
             onClick={onClear}
@@ -161,10 +166,19 @@ function PlayerSearch({
             <li
               key={p.id}
               onClick={() => { onSelect(p); setQuery(""); setResults([]); }}
-              className="px-4 py-2 text-sm hover:bg-gray-50 cursor-pointer"
+              className="px-4 py-2 text-sm hover:bg-gray-50 cursor-pointer flex items-center justify-between"
             >
-              {p.first_name} {p.last_name}
-              <span className="text-gray-400 ml-2">{p.position}</span>
+              <span>{p.first_name} {p.last_name}</span>
+              <span className="ml-2 text-xs">
+                {p.position ? (
+                  <>
+                    <span className="font-semibold text-gray-700">{p.position.split(",")[0]}</span>
+                    {p.position.split(",").slice(1).join(",") && (
+                      <span className="text-gray-400">{","}{p.position.split(",").slice(1).join(",")}</span>
+                    )}
+                  </>
+                ) : ""}
+              </span>
             </li>
           ))}
         </ul>
