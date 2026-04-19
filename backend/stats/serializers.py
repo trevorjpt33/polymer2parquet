@@ -53,7 +53,6 @@ class PlayerSeasonListSerializer(serializers.ModelSerializer):
     """Lightweight serializer for list views"""
     player = PlayerListSerializer(read_only=True)
     team = TeamListSerializer(read_only=True)
-
     class Meta:
         model = PlayerSeason
         fields = [
@@ -65,5 +64,16 @@ class PlayerSeasonListSerializer(serializers.ModelSerializer):
             "games_played",
             "points_per_game",
             "rebounds_per_game",
-            "assists_per_game"
+            "assists_per_game",
+            "steals_per_game",
+            "blocks_per_game",
+            "turnovers_per_game",
+            "field_goal_percentage",
+            "three_point_percentage",
+            "free_throw_percentage",
+            "player_efficiency_rating",
+            "true_shooting_percentage",
+            "win_shares",
+            "box_plus_minus",
+            "value_over_replacement",
         ]

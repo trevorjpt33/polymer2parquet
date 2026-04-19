@@ -49,6 +49,7 @@ export const getTeams = async (params?: {
   search?: string;
   league?: "NBA" | "ABA";
   is_active?: boolean;
+  page?: number;
 }): Promise<PaginatedResponse<TeamList>> => {
   const response = await api.get("/teams/", { params });
   return response.data;

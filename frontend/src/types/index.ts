@@ -89,6 +89,17 @@ export interface PlayerSeasonList {
   points_per_game: number | null;
   rebounds_per_game: number | null;
   assists_per_game: number | null;
+  steals_per_game: number | null;
+  blocks_per_game: number | null;
+  turnovers_per_game: number | null;
+  field_goal_percentage: number | null;
+  three_point_percentage: number | null;
+  free_throw_percentage: number | null;
+  player_efficiency_rating: number | null;
+  true_shooting_percentage: number | null;
+  win_shares: number | null;
+  box_plus_minus: number | null;
+  value_over_replacement: number | null;
 }
 
 export interface PaginatedResponse<T> {
