@@ -12,15 +12,39 @@ class PlayerViewSet(viewsets.ModelViewSet):
     ordering_fields = ["last_name", "first_name", "position", "country"]
     ordering = ["last_name"]
 
+    def get_queryset(self):
+        queryset = Player.objects.all()
+        position = self.request.query_params.get("position")
+        is_active = self.request.query_params.get("is_active")
+        league = self.request.query_params.get("league")
+        era = self.request.query_params.get("era")
+
+        if position:
+            queryset = queryset.filter(position=position)
+        if is_active is not None:
+            queryset = queryset.filter(is_active=is_active.lower() == "true")
+        if league:
+            queryset = queryset.filter(seasons__league=league).distinct()
+        if era:
+            try:
+                decade_start = int(era)
+                decade_end = decade_start + 9
+                queryset = queryset.filter(
+                    seasons__season_year__gte=decade_start,
+                    seasons__season_year__lte=decade_end
+                ).distinct()
+            except ValueError:
+                pass
+
+        return queryset
+
     def get_serializer_class(self):
-        """Use lightweight serializer for list view, full serializer for detail view"""
         if self.action == "list":
             return PlayerListSerializer
         return PlayerSerializer
 
     @action(detail=True, methods=["get"])
     def awards(self, request, pk=None):
-        """Custom endpoint: GET /api/players/1/awards/"""
         player = self.get_object()
         awards = player.awards.all()
         serializer = AwardSerializer(awards, many=True)
@@ -28,7 +52,6 @@ class PlayerViewSet(viewsets.ModelViewSet):
 
     @action(detail=True, methods=["get"])
     def seasons(self, request, pk=None):
-        """Custom endpoint: GET /api/players/1/seasons/"""
         from stats.serializers import PlayerSeasonListSerializer
         player = self.get_object()
         seasons = player.seasons.all().order_by("season_year")
