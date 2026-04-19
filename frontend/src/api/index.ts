@@ -23,8 +23,8 @@ export const getPlayers = async (params?: {
   ordering?: string;
   page?: number;
   position?: string;
-  is_active?: boolean;
-  league?: "NBA" | "ABA";
+  is_active?: string;
+  league?: string;
   era?: string;
 }): Promise<PaginatedResponse<PlayerList>> => {
   const response = await api.get("/players/", { params });

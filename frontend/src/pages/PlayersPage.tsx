@@ -3,8 +3,9 @@ import { useNavigate } from "react-router-dom";
 import { getPlayers } from "../api";
 import type { PlayerList } from "../types";
 
-const POSITIONS = ["G", "F", "C", "G-F", "F-G", "F-C", "C-F", "G-C"];
-
+const POSITIONS = ["PG", "SG", "SF", "PF", "C"];
+const LEAGUES = ["NBA", "ABA"];
+const STATUSES = [{ label: "Active", value: "true" }, { label: "Retired", value: "false" }];
 const ERAS = [
   { label: "1940s", value: "1946" },
   { label: "1950s", value: "1950" },
@@ -17,15 +18,46 @@ const ERAS = [
   { label: "2020s", value: "2020" },
 ];
 
+function PillGroup<T extends string>({
+  options,
+  selected,
+  onToggle,
+}: {
+  options: { label: string; value: T }[];
+  selected: T[];
+  onToggle: (value: T) => void;
+}) {
+  return (
+    <div className="flex flex-wrap gap-2">
+      {options.map((opt) => {
+        const active = selected.includes(opt.value);
+        return (
+          <button
+            key={opt.value}
+            onClick={() => onToggle(opt.value)}
+            className={`px-3 py-1 rounded-full text-xs font-medium border transition-colors ${
+              active
+                ? "bg-gray-900 text-white border-gray-900"
+                : "bg-white text-gray-600 border-gray-300 hover:border-gray-500"
+            }`}
+          >
+            {opt.label}
+          </button>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function PlayersPage() {
   const [players, setPlayers] = useState<PlayerList[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState("");
-  const [position, setPosition] = useState("");
-  const [status, setStatus] = useState("");
-  const [league, setLeague] = useState("");
-  const [era, setEra] = useState("");
+  const [selectedPositions, setSelectedPositions] = useState<string[]>([]);
+  const [selectedLeagues, setSelectedLeagues] = useState<string[]>([]);
+  const [selectedStatuses, setSelectedStatuses] = useState<string[]>([]);
+  const [selectedEras, setSelectedEras] = useState<string[]>([]);
   const [page, setPage] = useState(1);
   const [inputPage, setInputPage] = useState("1");
   const [pageTimer, setPageTimer] = useState<ReturnType<typeof setTimeout> | undefined>(undefined);
@@ -35,15 +67,18 @@ export default function PlayersPage() {
   const navigate = useNavigate();
   const PAGE_SIZE = 100;
 
+  const toggle = <T extends string>(arr: T[], val: T): T[] =>
+    arr.includes(val) ? arr.filter((v) => v !== val) : [...arr, val];
+
   useEffect(() => {
     setLoading(true);
     getPlayers({
-      search,
+      search: search || undefined,
       page,
-      position: position || undefined,
-      is_active: status === "" ? undefined : status === "active",
-      league: league as "NBA" | "ABA" | undefined || undefined,
-      era: era || undefined,
+      position: selectedPositions.length ? selectedPositions.join(",") : undefined,
+      is_active: selectedStatuses.length === 1 ? selectedStatuses[0] : undefined,
+      league: selectedLeagues.length ? selectedLeagues.join(",") : undefined,
+      era: selectedEras.length ? selectedEras.join(",") : undefined,
     })
       .then((data) => {
         setPlayers(data.results);
@@ -56,7 +91,7 @@ export default function PlayersPage() {
         setError("Failed to load players.");
         setLoading(false);
       });
-  }, [search, page, position, status, league, era]);
+  }, [search, page, selectedPositions, selectedLeagues, selectedStatuses, selectedEras]);
 
   useEffect(() => {
     setInputPage(String(page));
@@ -64,80 +99,84 @@ export default function PlayersPage() {
 
   const resetFilters = () => {
     setSearch("");
-    setPosition("");
-    setStatus("");
-    setLeague("");
-    setEra("");
+    setSelectedPositions([]);
+    setSelectedLeagues([]);
+    setSelectedStatuses([]);
+    setSelectedEras([]);
     setPage(1);
   };
 
-  const hasActiveFilters = search || position || status || league || era;
+  const hasActiveFilters =
+    search ||
+    selectedPositions.length ||
+    selectedLeagues.length ||
+    selectedStatuses.length ||
+    selectedEras.length;
+
   const totalPages = Math.ceil(totalCount / PAGE_SIZE);
 
   return (
     <div>
       {/* Header */}
       <div className="mb-6">
-        <div className="flex items-center justify-between mb-3">
+        <div className="flex items-center justify-between mb-4">
           <div>
             <h1 className="text-2xl font-bold text-gray-900">Players</h1>
             <p className="text-sm text-gray-500 mt-1">{totalCount.toLocaleString()} players</p>
           </div>
-          {hasActiveFilters && (
+          {hasActiveFilters ? (
             <button
               onClick={resetFilters}
               className="text-sm text-gray-500 hover:text-gray-900 transition-colors"
             >
               Clear filters
             </button>
-          )}
+          ) : null}
         </div>
-        <div className="flex flex-wrap items-center gap-3">
-          <input
-            type="text"
-            placeholder="Search players..."
-            value={search}
-            onChange={(e) => { setSearch(e.target.value); setPage(1); }}
-            className="w-56 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
-          />
-          <select
-            value={position}
-            onChange={(e) => { setPosition(e.target.value); setPage(1); }}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
-          >
-            <option value="">All Positions</option>
-            {POSITIONS.map((p) => (
-              <option key={p} value={p}>{p}</option>
-            ))}
-          </select>
-          <select
-            value={league}
-            onChange={(e) => { setLeague(e.target.value); setPage(1); }}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
-          >
-            <option value="">All Leagues</option>
-            <option value="NBA">NBA</option>
-            <option value="ABA">ABA</option>
-          </select>
-          <select
-            value={status}
-            onChange={(e) => { setStatus(e.target.value); setPage(1); }}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
-          >
-            <option value="">All Players</option>
-            <option value="active">Active</option>
-            <option value="retired">Retired</option>
-          </select>
-          <select
-            value={era}
-            onChange={(e) => { setEra(e.target.value); setPage(1); }}
-            className="px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900"
-          >
-            <option value="">All Eras</option>
-            {ERAS.map((e) => (
-              <option key={e.value} value={e.value}>{e.label}</option>
-            ))}
-          </select>
+
+        {/* Search */}
+        <input
+          type="text"
+          placeholder="Search players..."
+          value={search}
+          onChange={(e) => { setSearch(e.target.value); setPage(1); }}
+          className="w-64 px-4 py-2 text-sm border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-gray-900 mb-4"
+        />
+
+        {/* Filter pills */}
+        <div className="space-y-3">
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-gray-400 uppercase tracking-wide w-16">Position</span>
+            <PillGroup
+              options={POSITIONS.map((p) => ({ label: p, value: p }))}
+              selected={selectedPositions}
+              onToggle={(v) => { setSelectedPositions(toggle(selectedPositions, v)); setPage(1); }}
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-gray-400 uppercase tracking-wide w-16">League</span>
+            <PillGroup
+              options={LEAGUES.map((l) => ({ label: l, value: l }))}
+              selected={selectedLeagues}
+              onToggle={(v) => { setSelectedLeagues(toggle(selectedLeagues, v)); setPage(1); }}
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-gray-400 uppercase tracking-wide w-16">Status</span>
+            <PillGroup
+              options={STATUSES}
+              selected={selectedStatuses}
+              onToggle={(v) => { setSelectedStatuses(toggle(selectedStatuses, v)); setPage(1); }}
+            />
+          </div>
+          <div className="flex items-center gap-4">
+            <span className="text-xs text-gray-400 uppercase tracking-wide w-16">Era</span>
+            <PillGroup
+              options={ERAS}
+              selected={selectedEras}
+              onToggle={(v) => { setSelectedEras(toggle(selectedEras, v)); setPage(1); }}
+            />
+          </div>
         </div>
       </div>
 
@@ -177,7 +216,16 @@ export default function PlayersPage() {
                   <td className="px-6 py-3 font-medium text-gray-900">
                     {player.first_name} {player.last_name}
                   </td>
-                  <td className="px-6 py-3 text-gray-600">{player.position || "—"}</td>
+                  <td className="px-6 py-3 text-gray-600">
+                    {player.position ? (
+                      <>
+                        <span className="font-semibold text-gray-900">{player.position.split(",")[0]}</span>
+                        {player.position.split(",").slice(1).join(",") && (
+                          <span className="text-gray-400">{","}{player.position.split(",").slice(1).join(",")}</span>
+                        )}
+                      </>
+                    ) : "—"}
+                  </td>
                   <td className="px-6 py-3 text-gray-600">{player.country || "—"}</td>
                   <td className="px-6 py-3">
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${

@@ -49,15 +49,28 @@ class Command(BaseCommand):
                     "vorp":       self._float(row.get("vorp")),
                 }
 
-        self.stdout.write("Pre-caching players and teams...")
-        player_cache = {p.player_id: p.id for p in Player.objects.only("id", "player_id")}
-        team_cache = {(t.abbreviation, t.league): t.id for t in Team.objects.only("id", "abbreviation", "league")}
+        self.stdout.write("Building position lookup...")
+        position_map = {}
+        with open(ppg_path, encoding="utf-8") as f:
+            for row in csv.DictReader(f):
+                if row["team"] in ("TOT", "2TM", "3TM", "4TM", "5TM"):
+                    continue
+                player_id = row.get("player_id", "").strip()
+                pos = row.get("pos", "").strip()
+                if player_id and pos and pos != "NA":
+                    if player_id not in position_map:
+                        position_map[player_id] = {}
+                    position_map[player_id][pos] = position_map[player_id].get(pos, 0) + 1
 
         self.stdout.write("Loading player seasons...")
         created = skipped = missing_player = missing_team = 0
 
         PlayerSeason.objects.all().delete()
         self.stdout.write("Cleared existing player seasons.")
+
+        self.stdout.write("Pre-caching players and teams...")
+        player_cache = {p.player_id: p.id for p in Player.objects.only("id", "player_id")}
+        team_cache = {(t.abbreviation, t.league): t.id for t in Team.objects.only("id", "abbreviation", "league")}
 
         batch = []
         BATCH_SIZE = 500
@@ -127,6 +140,25 @@ class Command(BaseCommand):
 
         if batch:
             PlayerSeason.objects.bulk_create(batch)
+
+        # Enrich player positions from per-game CSV
+        self.stdout.write("Enriching player positions...")
+        position_updates = 0
+        players_to_update = Player.objects.filter(
+            player_id__in=position_map.keys()
+        ).only("id", "player_id", "position")
+
+        update_batch = []
+        for player in players_to_update:
+            pos_counts = position_map.get(player.player_id, {})
+            if pos_counts:
+                positions = sorted(pos_counts.keys(), key=lambda p: pos_counts[p], reverse=True)
+                player.position = ",".join(positions)
+                update_batch.append(player)
+                position_updates += 1
+
+        Player.objects.bulk_update(update_batch, ["position"])
+        self.stdout.write(f"Updated positions for {position_updates} players.")
 
         self.stdout.write(self.style.SUCCESS(
             f"Done. Created: {created} | Skipped/duplicate: {skipped} | "

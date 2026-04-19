@@ -5,7 +5,7 @@ class Player(models.Model):
     player_id = models.CharField(max_length=20, unique=True, blank=True, null=True, default=None)
     first_name = models.CharField(max_length=100)
     last_name = models.CharField(max_length=100)
-    position = models.CharField(max_length=10, blank=True)
+    position = models.CharField(max_length=20, blank=True)
     birth_date = models.DateField(null=True, blank=True)
     country = models.CharField(max_length=100, blank=True)
     college = models.CharField(max_length=100, blank=True)

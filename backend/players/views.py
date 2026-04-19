@@ -1,6 +1,7 @@
 from rest_framework import viewsets, filters
 from rest_framework.decorators import action
 from rest_framework.response import Response
+from django.db.models import Q
 from .models import Player, Award
 from .serializers import PlayerSerializer, PlayerListSerializer, AwardSerializer
 
@@ -20,21 +21,42 @@ class PlayerViewSet(viewsets.ModelViewSet):
         era = self.request.query_params.get("era")
 
         if position:
-            queryset = queryset.filter(position=position)
-        if is_active is not None:
-            queryset = queryset.filter(is_active=is_active.lower() == "true")
+            positions = position.split(",")
+            q = Q()
+            for p in positions:
+                q |= Q(position__contains=p)
+                if p in ("PG", "SG"):
+                    q |= Q(position="G")
+                if p in ("SF", "PF"):
+                    q |= Q(position="F")
+            queryset = queryset.filter(q)
+
+        if is_active:
+            statuses = is_active.split(",")
+            if len(statuses) == 1:
+                queryset = queryset.filter(is_active=statuses[0].lower() == "true")
+
         if league:
-            queryset = queryset.filter(seasons__league=league).distinct()
+            leagues = league.split(",")
+            queryset = queryset.filter(
+                seasons__league__in=leagues
+            ).distinct()
+
         if era:
-            try:
-                decade_start = int(era)
-                decade_end = decade_start + 9
-                queryset = queryset.filter(
-                    seasons__season_year__gte=decade_start,
-                    seasons__season_year__lte=decade_end
-                ).distinct()
-            except ValueError:
-                pass
+            eras = era.split(",")
+            q = Q()
+            for e in eras:
+                try:
+                    decade_start = int(e)
+                    decade_end = decade_start + 9
+                    q |= Q(
+                        seasons__season_year__gte=decade_start,
+                        seasons__season_year__lte=decade_end
+                    )
+                except ValueError:
+                    pass
+            if q:
+                queryset = queryset.filter(q).distinct()
 
         return queryset
 

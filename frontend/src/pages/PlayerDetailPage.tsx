@@ -53,7 +53,16 @@ export default function PlayerDetailPage() {
             <h1 className="text-3xl font-bold text-gray-900">
               {player.first_name} {player.last_name}
             </h1>
-            <p className="text-gray-500 mt-1">{player.position || "—"}</p>
+            <p className="text-gray-500 mt-1">
+              {player.position ? (
+                <>
+                  <span className="font-semibold text-gray-900">{player.position.split(",")[0]}</span>
+                  {player.position.split(",").slice(1).join(",") && (
+                    <span className="text-gray-400">{","}{player.position.split(",").slice(1).join(",")}</span>
+                  )}
+                </>
+              ) : "—"}
+            </p>
           </div>
           <span className={`inline-flex px-3 py-1 rounded-full text-sm font-medium ${
             player.is_active
