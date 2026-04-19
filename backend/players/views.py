@@ -27,8 +27,14 @@ class PlayerViewSet(viewsets.ModelViewSet):
                 q |= Q(position__contains=p)
                 if p in ("PG", "SG"):
                     q |= Q(position="G")
+                if p in ("SG", "SF"):
+                    q |= Q(position="G-F")
+                    q |= Q(position="F-G")
                 if p in ("SF", "PF"):
                     q |= Q(position="F")
+                if p in ("PF", "C"):
+                    q |= Q(position="F-C")
+                    q |= Q(position="C-F")
             queryset = queryset.filter(q)
 
         if is_active:

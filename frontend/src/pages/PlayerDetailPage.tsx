@@ -252,6 +252,7 @@ export default function PlayerDetailPage() {
                 dataKey="season_year"
                 type="number"
                 domain={["dataMin", "dataMax"]}
+                allowDecimals={false}
                 tick={{ fontSize: 12, fill: "#9ca3af" }}
                 tickLine={false}
               />
