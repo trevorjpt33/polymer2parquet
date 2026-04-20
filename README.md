@@ -1,5 +1,5 @@
 # polymer2parquet
-
+TO-DO: Live Custom Domain
 ## Overview
 
 **polymer2parquet** is a full-stack, containerized web application for exploring NBA and ABA historical player statistics, as well as current player statistics. The name references the ABA's well-known red, white, and blue **polymer** rubber ball and the NBA's iconic **parquet** hardwood floors. The **2** in the name **polymer2parquet** symbolizes the two indelibly linked leagues at the forefront of professional basketball history in the United States.
@@ -13,6 +13,20 @@ What it does:
 - Browse all 104 NBA and ABA franchises with season-by-season roster views
 - One of the few platforms that treats NBA and ABA data as a unified dataset
 
+Tech stack:
+
+- Frontend: React + TypeScript (Vite) + Tailwind CSS, served via NGINX
+- Backend: Python (Django) + Django REST Framework
+- Database: PostgreSQL 16
+- Containerization: Docker (multi-stage builds)
+- Local dev: Docker Compose
+- Orchestration: Kubernetes (GKE)
+- Traffic routing: Kubernetes Gateway API + NGINX Gateway Fabric
+- Cloud: GCP (GKE, Artifact Registry, Secret Manager)
+- Infrastructure as Code: Terraform with remote state in GCS, in tandem with Ansible for Configuration Management
+- Data visualization: Recharts
+- Data source: Kaggle NBA/ABA datasets enriched via management commands
+
 ## Navigation Preview
 
 Homepage
@@ -23,6 +37,9 @@ Player Encyclopedia
 
 Player Details
 <img width="1903" height="1024" alt="polymer2parquet - Player Details" src="https://github.com/user-attachments/assets/cc44db03-e6e1-433b-82f6-eda96e7944a9" />
+
+Career Trajectory Chart
+<img width="1903" height="908" alt="polymer2parquet - Career Trajectory Chart" src="https://github.com/user-attachments/assets/08a3b515-8b36-4551-bbae-31a809737434" />
 
 Team Encyclopedia
 <img width="1920" height="901" alt="polymer2parquet - Teams Encyclopedia" src="https://github.com/user-attachments/assets/61617a46-f296-4a2e-892b-ed4fa4596240" />
