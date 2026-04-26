@@ -1,0 +1,92 @@
+---
+- name: Full GKE redeployment
+  hosts: local
+  connection: local
+  vars:
+    namespace: polymer2parquet
+    gateway_api_version: v1.2.0
+    nginx_version: v1.4.0
+
+  tasks:
+    - name: Apply namespace
+      shell: kubectl apply -f k8s/namespace.yaml
+
+    - name: Apply configmap
+      shell: kubectl apply -f k8s/configmap.yaml
+
+    - name: Apply secret
+      shell: kubectl apply -f k8s/secret.yaml
+
+    - name: Apply postgres PVC
+      shell: kubectl apply -f k8s/postgres/pvc.yaml
+
+    - name: Apply postgres deployment
+      shell: kubectl apply -f k8s/postgres/deployment.yaml
+
+    - name: Apply postgres service
+      shell: kubectl apply -f k8s/postgres/service.yaml
+
+    - name: Wait for postgres to be ready
+      shell: |
+        kubectl wait pod \
+          --for=condition=Ready \
+          -l app=postgres \
+          -n {{ namespace }} \
+          --timeout=120s
+
+    - name: Apply backend deployment
+      shell: kubectl apply -f k8s/backend/deployment.yaml
+
+    - name: Apply backend service
+      shell: kubectl apply -f k8s/backend/service.yaml
+
+    - name: Apply frontend deployment
+      shell: kubectl apply -f k8s/frontend/deployment.yaml
+
+    - name: Apply frontend service
+      shell: kubectl apply -f k8s/frontend/service.yaml
+
+    - name: Run migration job
+      shell: kubectl apply -f k8s/backend/migration-job.yaml
+
+    - name: Wait for backend to be ready
+      shell: |
+        kubectl wait pod \
+          --for=condition=Ready \
+          -l app=backend \
+          -n {{ namespace }} \
+          --timeout=120s
+
+    - name: Install Gateway API CRDs
+      shell: |
+        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/download/{{ gateway_api_version }}/standard-install.yaml
+
+    - name: Install NGINX Gateway Fabric CRDs
+      shell: |
+        kubectl apply -f https://raw.githubusercontent.com/nginxinc/nginx-gateway-fabric/{{ nginx_version }}/deploy/crds.yaml
+
+    - name: Deploy NGINX Gateway Fabric
+      shell: |
+        kubectl apply -f https://raw.githubusercontent.com/nginxinc/nginx-gateway-fabric/{{ nginx_version }}/deploy/default/deploy.yaml
+
+    - name: Apply Gateway
+      shell: kubectl apply -f k8s/gateway.yaml
+
+    - name: Apply HTTPRoute
+      shell: kubectl apply -f k8s/httproute.yaml
+
+    - name: Wait for all pods to be ready
+      shell: |
+        kubectl wait pod \
+          --for=condition=Ready \
+          --all \
+          -n {{ namespace }} \
+          --timeout=180s
+
+    - name: Get Gateway IP
+      shell: kubectl get gateway -n {{ namespace }}
+      register: gateway_info
+
+    - name: Print Gateway IP
+      debug:
+        msg: "{{ gateway_info.stdout_lines }}"

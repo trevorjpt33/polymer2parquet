@@ -1,0 +1,40 @@
+---
+- name: Start polymer2parquet session
+  hosts: local
+  connection: local
+  vars:
+    cluster: polymer2parquet-cluster
+    node_pool: polymer2parquet-node-pool
+    zone: us-central1-f
+    namespace: polymer2parquet
+    num_nodes: 2
+
+  tasks:
+    - name: Scale up node pool
+      shell: |
+        gcloud container clusters resize {{ cluster }} \
+          --node-pool {{ node_pool }} \
+          --num-nodes {{ num_nodes }} \
+          --zone {{ zone }} \
+          --quiet
+
+    - name: Scale up deployments
+      shell: |
+        kubectl scale deployment backend frontend postgres \
+          -n {{ namespace }} --replicas=1
+
+    - name: Wait for pods to be ready
+      shell: |
+        kubectl wait pod \
+          --for=condition=Ready \
+          --all \
+          -n {{ namespace }} \
+          --timeout=120s
+
+    - name: Show pod status
+      shell: kubectl get pods -n {{ namespace }}
+      register: pod_status
+
+    - name: Print pod status
+      debug:
+        msg: "{{ pod_status.stdout_lines }}"

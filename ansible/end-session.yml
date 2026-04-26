@@ -1,0 +1,42 @@
+---
+- name: End polymer2parquet session
+  hosts: local
+  connection: local
+  vars:
+    cluster: polymer2parquet-cluster
+    node_pool: polymer2parquet-node-pool
+    zone: us-central1-f
+    namespace: polymer2parquet
+
+  tasks:
+    - name: Scale down deployments
+      shell: |
+        kubectl scale deployment backend frontend postgres \
+          -n {{ namespace }} --replicas=0
+
+    - name: Wait for pods to terminate
+      shell: |
+        kubectl wait pod \
+          --for=delete \
+          --all \
+          -n {{ namespace }} \
+          --timeout=120s
+
+    - name: Scale down node pool
+      shell: |
+        gcloud container clusters resize {{ cluster }} \
+          --node-pool {{ node_pool }} \
+          --num-nodes 0 \
+          --zone {{ zone }} \
+          --quiet
+
+    - name: Confirm node pool scaled down
+      shell: |
+        gcloud container clusters describe {{ cluster }} \
+          --zone {{ zone }} \
+          --format="value(nodePools[0].initialNodeCount)"
+      register: node_count
+
+    - name: Print node count
+      debug:
+        msg: "Node pool scaled to: {{ node_count.stdout }} nodes"

@@ -1,0 +1,55 @@
+---
+- name: Run data ingestion on GKE
+  hosts: local
+  connection: local
+  vars:
+    namespace: polymer2parquet
+
+  tasks:
+    - name: Get backend pod name
+      shell: |
+        kubectl get pod \
+          -n {{ namespace }} \
+          -l app=backend \
+          -o jsonpath='{.items[0].metadata.name}'
+      register: backend_pod
+
+    - name: Run load_teams
+      shell: |
+        kubectl exec -n {{ namespace }} {{ backend_pod.stdout }} \
+          -- python manage.py load_teams
+      register: load_teams_output
+
+    - name: Print load_teams output
+      debug:
+        msg: "{{ load_teams_output.stdout_lines }}"
+
+    - name: Run load_players
+      shell: |
+        kubectl exec -n {{ namespace }} {{ backend_pod.stdout }} \
+          -- python manage.py load_players
+      register: load_players_output
+
+    - name: Print load_players output
+      debug:
+        msg: "{{ load_players_output.stdout_lines }}"
+
+    - name: Run load_seasons
+      shell: |
+        kubectl exec -n {{ namespace }} {{ backend_pod.stdout }} \
+          -- python manage.py load_seasons
+      register: load_seasons_output
+
+    - name: Print load_seasons output
+      debug:
+        msg: "{{ load_seasons_output.stdout_lines }}"
+
+    - name: Run load_awards
+      shell: |
+        kubectl exec -n {{ namespace }} {{ backend_pod.stdout }} \
+          -- python manage.py load_awards
+      register: load_awards_output
+
+    - name: Print load_awards output
+      debug:
+        msg: "{{ load_awards_output.stdout_lines }}"
