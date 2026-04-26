@@ -1,0 +1,100 @@
+name: Deploy to GKE
+
+on:
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - 'ansible/**'
+      - 'terraform/**'
+      - '*.md'
+
+jobs:
+  deploy-backend:
+    name: Build and deploy backend
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.head_commit.modified, 'backend/') ||
+      contains(github.event.head_commit.added, 'backend/')
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build and push backend image
+        run: |
+          docker build \
+            -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-backend:latest \
+            -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-backend:${{ github.sha }} \
+            ./backend
+          docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-backend:latest
+          docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-backend:${{ github.sha }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER }}
+          location: us-central1-f
+
+      - name: Roll out backend
+        run: |
+          kubectl rollout restart deployment/backend -n polymer2parquet
+          kubectl rollout status deployment/backend -n polymer2parquet --timeout=120s
+
+  deploy-frontend:
+    name: Build and deploy frontend
+    runs-on: ubuntu-latest
+    if: |
+      contains(github.event.head_commit.modified, 'frontend/') ||
+      contains(github.event.head_commit.added, 'frontend/')
+
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+
+      - name: Build and push frontend image
+        run: |
+          docker build \
+            --build-arg VITE_API_URL=http://104.154.136.31/api \
+            -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-frontend:latest \
+            -t us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-frontend:${{ github.sha }} \
+            ./frontend
+          docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-frontend:latest
+          docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-frontend:${{ github.sha }}
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER }}
+          location: us-central1-f
+
+      - name: Roll out frontend
+        run: |
+          kubectl rollout restart deployment/frontend -n polymer2parquet
+          kubectl rollout status deployment/frontend -n polymer2parquet --timeout=120s

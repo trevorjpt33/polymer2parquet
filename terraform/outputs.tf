@@ -22,3 +22,8 @@ output "registry_frontend_image" {
   description = "Frontend image URL"
   value       = "${var.region}-docker.pkg.dev/${var.project_id}/polymer2parquet/polymer2parquet-frontend:latest"
 }
+
+output "workload_identity_provider" {
+  description = "Workload Identity Provider resource name for GitHub Actions"
+  value       = google_iam_workload_identity_pool_provider.github_provider.name
+}
