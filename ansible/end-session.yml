@@ -6,20 +6,20 @@
     cluster: polymer2parquet-cluster
     node_pool: polymer2parquet-node-pool
     zone: us-central1-f
-    namespace: polymer2parquet
+    k8s_namespace: polymer2parquet
 
   tasks:
     - name: Scale down deployments
       shell: |
         kubectl scale deployment backend frontend postgres \
-          -n {{ namespace }} --replicas=0
+          -n {{ k8s_namespace }} --replicas=0
 
     - name: Wait for pods to terminate
       shell: |
         kubectl wait pod \
           --for=delete \
           --all \
-          -n {{ namespace }} \
+          -n {{ k8s_namespace }} \
           --timeout=120s
 
     - name: Scale down node pool
@@ -30,13 +30,17 @@
           --zone {{ zone }} \
           --quiet
 
-    - name: Confirm node pool scaled down
+    - name: Wait for node pool to fully scale down
       shell: |
-        gcloud container clusters describe {{ cluster }} \
+        gcloud container node-pools describe {{ node_pool }} \
+          --cluster {{ cluster }} \
           --zone {{ zone }} \
-          --format="value(nodePools[0].initialNodeCount)"
-      register: node_count
+          --format="value(status)"
+      register: pool_status
+      until: pool_status.stdout == "RUNNING"
+      retries: 20
+      delay: 30
 
-    - name: Print node count
+    - name: Print final node pool status
       debug:
-        msg: "Node pool scaled to: {{ node_count.stdout }} nodes"
+        msg: "Node pool status: {{ pool_status.stdout }}"

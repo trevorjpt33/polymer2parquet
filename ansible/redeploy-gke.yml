@@ -3,7 +3,7 @@
   hosts: local
   connection: local
   vars:
-    namespace: polymer2parquet
+    k8s_namespace: polymer2parquet
     gateway_api_version: v1.2.0
     nginx_version: v1.4.0
 
@@ -31,7 +31,7 @@
         kubectl wait pod \
           --for=condition=Ready \
           -l app=postgres \
-          -n {{ namespace }} \
+          -n {{ k8s_namespace }} \
           --timeout=120s
 
     - name: Apply backend deployment
@@ -54,7 +54,7 @@
         kubectl wait pod \
           --for=condition=Ready \
           -l app=backend \
-          -n {{ namespace }} \
+          -n {{ k8s_namespace }} \
           --timeout=120s
 
     - name: Install Gateway API CRDs
@@ -80,11 +80,11 @@
         kubectl wait pod \
           --for=condition=Ready \
           --all \
-          -n {{ namespace }} \
+          -n {{ k8s_namespace }} \
           --timeout=180s
 
     - name: Get Gateway IP
-      shell: kubectl get gateway -n {{ namespace }}
+      shell: kubectl get gateway -n {{ k8s_namespace }}
       register: gateway_info
 
     - name: Print Gateway IP

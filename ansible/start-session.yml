@@ -6,7 +6,7 @@
     cluster: polymer2parquet-cluster
     node_pool: polymer2parquet-node-pool
     zone: us-central1-f
-    namespace: polymer2parquet
+    k8s_namespace: polymer2parquet
     num_nodes: 2
 
   tasks:
@@ -18,21 +18,25 @@
           --zone {{ zone }} \
           --quiet
 
+    - name: Wait for node pool to provision
+      pause:
+        seconds: 90
+
     - name: Scale up deployments
       shell: |
         kubectl scale deployment backend frontend postgres \
-          -n {{ namespace }} --replicas=1
+          -n {{ k8s_namespace }} --replicas=1
 
     - name: Wait for pods to be ready
       shell: |
         kubectl wait pod \
           --for=condition=Ready \
           --all \
-          -n {{ namespace }} \
-          --timeout=120s
+          -n {{ k8s_namespace }} \
+          --timeout=180s
 
     - name: Show pod status
-      shell: kubectl get pods -n {{ namespace }}
+      shell: kubectl get pods -n {{ k8s_namespace }}
       register: pod_status
 
     - name: Print pod status

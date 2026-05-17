@@ -3,20 +3,20 @@
   hosts: local
   connection: local
   vars:
-    namespace: polymer2parquet
+    k8s_namespace: polymer2parquet
 
   tasks:
     - name: Get backend pod name
       shell: |
         kubectl get pod \
-          -n {{ namespace }} \
+          -n {{ k8s_namespace }} \
           -l app=backend \
           -o jsonpath='{.items[0].metadata.name}'
       register: backend_pod
 
     - name: Run load_teams
       shell: |
-        kubectl exec -n {{ namespace }} {{ backend_pod.stdout }} \
+        kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
           -- python manage.py load_teams
       register: load_teams_output
 
@@ -26,7 +26,7 @@
 
     - name: Run load_players
       shell: |
-        kubectl exec -n {{ namespace }} {{ backend_pod.stdout }} \
+        kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
           -- python manage.py load_players
       register: load_players_output
 
@@ -36,7 +36,7 @@
 
     - name: Run load_seasons
       shell: |
-        kubectl exec -n {{ namespace }} {{ backend_pod.stdout }} \
+        kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
           -- python manage.py load_seasons
       register: load_seasons_output
 
@@ -46,7 +46,7 @@
 
     - name: Run load_awards
       shell: |
-        kubectl exec -n {{ namespace }} {{ backend_pod.stdout }} \
+        kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
           -- python manage.py load_awards
       register: load_awards_output
 
