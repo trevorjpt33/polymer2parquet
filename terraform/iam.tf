@@ -61,3 +61,11 @@ resource "google_service_account_iam_member" "github_wif_binding" {
   role               = "roles/iam.workloadIdentityUser"
   member             = "principalSet://iam.googleapis.com/${google_iam_workload_identity_pool.github_pool.name}/attribute.repository/trevorjpt33/polymer2parquet"
 }
+
+# --- GKE node service account role ---
+
+resource "google_project_iam_member" "container_default_node_sa" {
+  project = var.project_id
+  role    = "roles/container.defaultNodeServiceAccount"
+  member  = "serviceAccount:${google_service_account.polymer2parquet_sa.email}"
+}

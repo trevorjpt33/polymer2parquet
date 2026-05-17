@@ -39,9 +39,4 @@ resource "google_container_node_pool" "polymer2parquet_nodes" {
       "https://www.googleapis.com/auth/cloud-platform"
     ]
   }
-
-  autoscaling {
-    min_node_count = 1
-    max_node_count = 3
-  }
 }
