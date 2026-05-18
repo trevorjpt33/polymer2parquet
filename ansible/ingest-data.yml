@@ -17,7 +17,7 @@
     - name: Run load_teams
       shell: |
         kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
-          -- python manage.py load_teams
+          -- python manage.py load_teams 2>&1
       register: load_teams_output
 
     - name: Print load_teams output
@@ -27,7 +27,7 @@
     - name: Run load_players
       shell: |
         kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
-          -- python manage.py load_players
+          -- python manage.py load_players 2>&1
       register: load_players_output
 
     - name: Print load_players output
@@ -37,7 +37,7 @@
     - name: Run load_seasons
       shell: |
         kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
-          -- python manage.py load_seasons
+          -- python manage.py load_seasons 2>&1
       register: load_seasons_output
 
     - name: Print load_seasons output
@@ -47,7 +47,7 @@
     - name: Run load_awards
       shell: |
         kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
-          -- python manage.py load_awards
+          -- python manage.py load_awards 2>&1
       register: load_awards_output
 
     - name: Print load_awards output
