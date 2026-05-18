@@ -15,6 +15,7 @@ jobs:
     permissions:
       contents: read
       id-token: write
+      issues: write
 
     steps:
       - name: Checkout code
@@ -27,7 +28,18 @@ jobs:
           base: ${{ github.event.before }}
           head: ${{ github.sha }}
           extra_args: --only-verified
-    
+
+      - name: Run Bandit static analysis
+        run: |
+          pip install bandit
+          bandit -r backend/ -ll --exit-zero
+          bandit -r backend/ -lll
+
+      - name: Run pip-audit dependency scan
+        run: |
+          pip install pip-audit
+          pip-audit -r backend/requirements.txt
+
       - name: Authenticate to GCP
         uses: google-github-actions/auth@v2
         with:
@@ -46,6 +58,13 @@ jobs:
           docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-backend:latest
           docker push us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-backend:${{ github.sha }}
 
+      - name: Scan backend image with Trivy
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-backend:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: 1
+
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v2
         with:
@@ -56,3 +75,16 @@ jobs:
         run: |
           kubectl rollout restart deployment/backend -n polymer2parquet
           kubectl rollout status deployment/backend -n polymer2parquet --timeout=120s
+
+      - name: Create GitHub issue on failure
+        if: failure()
+        uses: actions/github-script@v7
+        with:
+          script: |
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: `🚨 Backend security scan failed on commit ${context.sha.slice(0, 7)}`,
+              body: `A security scan step failed in the backend CI/CD pipeline.\n\n**Commit:** ${context.sha}\n**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nPlease investigate and resolve before the next deployment.`,
+              labels: ['bug', 'devops']
+            })
