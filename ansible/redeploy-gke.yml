@@ -69,6 +69,20 @@
       shell: |
         kubectl apply -f https://raw.githubusercontent.com/nginxinc/nginx-gateway-fabric/{{ nginx_version }}/deploy/default/deploy.yaml
 
+    - name: Install Metrics Server
+      shell: |
+        kubectl apply -f https://github.com/kubernetes-sigs/metrics-server/releases/latest/download/components.yaml
+
+    - name: Wait for Metrics Server to be ready
+      shell: |
+        kubectl wait deployment metrics-server \
+          --for=condition=Available \
+          -n kube-system \
+          --timeout=120s
+
+    - name: Apply backend HPA
+      shell: kubectl apply -f k8s/backend/hpa.yaml
+
     - name: Apply Gateway
       shell: kubectl apply -f k8s/gateway.yaml
 
