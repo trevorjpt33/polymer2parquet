@@ -42,10 +42,6 @@ class Command(BaseCommand):
         players_created = 0
         players_skipped = 0
 
-        # Clear existing players
-        Player.objects.all().delete()
-        self.stdout.write("Cleared existing players.")
-
         with open(file_path, newline="", encoding="utf-8") as csvfile:
             reader = csv.DictReader(csvfile)
 
@@ -97,17 +93,19 @@ class Command(BaseCommand):
                 except (ValueError, KeyError):
                     is_active = False
 
-                Player.objects.create(
+                Player.objects.update_or_create(
                     player_id=row["player_id"].strip(),
-                    first_name=first_name,
-                    last_name=last_name,
-                    position=position,
-                    birth_date=birth_date,
-                    country="",
-                    college=college,
-                    height_inches=height_inches,
-                    weight_lbs=weight_lbs,
-                    is_active=is_active,
+                    defaults={
+                        "first_name": first_name,
+                        "last_name": last_name,
+                        "position": position,
+                        "birth_date": birth_date,
+                        "country": "",
+                        "college": college,
+                        "height_inches": height_inches,
+                        "weight_lbs": weight_lbs,
+                        "is_active": is_active,
+                    },
                 )
                 players_created += 1
 
@@ -116,7 +114,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Done. {players_created} players created, "
+                f"Done. {players_created} players upserted, "
                 f"{players_skipped} skipped.\n"
                 f"Active: {active_count} | Inactive: {inactive_count}"
             )

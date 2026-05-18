@@ -151,26 +151,24 @@ class Command(BaseCommand):
             data["previous_name"] = previous_names[-1] if previous_names else ""
             data["previous_city"] = previous_cities[-1] if previous_cities else ""
 
-        # Third pass — create teams
-        Team.objects.all().delete()
-        self.stdout.write("Cleared existing teams.")
-
         teams_created = 0
 
         for key, data in team_data.items():
             is_active = data["disbanded"] >= (most_recent_season - 1)
             disbanded = None if is_active else data["disbanded"]
 
-            Team.objects.create(
-                name=data["name"],
-                city=data["city"],
+            Team.objects.update_or_create(
                 abbreviation=data["abbreviation"],
                 league=data["league"],
-                founded=data["founded"] - 1,
-                disbanded=disbanded,
-                is_active=is_active,
-                previous_name=data.get("previous_name", ""),
-                previous_city=data.get("previous_city", ""),
+                defaults={
+                    "name": data["name"],
+                    "city": data["city"],
+                    "founded": data["founded"] - 1,
+                    "disbanded": disbanded,
+                    "is_active": is_active,
+                    "previous_name": data.get("previous_name", ""),
+                    "previous_city": data.get("previous_city", ""),
+                },
             )
             teams_created += 1
 
@@ -182,7 +180,7 @@ class Command(BaseCommand):
 
         self.stdout.write(
             self.style.SUCCESS(
-                f"Done. {teams_created} teams created.\n"
+                f"Done. {teams_created} teams upserted.\n"
                 f"Active: {active_count} | "
                 f"Inactive: {inactive_count} | "
                 f"With relocation history: {with_history}"

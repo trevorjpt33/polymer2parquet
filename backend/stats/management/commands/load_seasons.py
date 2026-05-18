@@ -65,9 +65,6 @@ class Command(BaseCommand):
         self.stdout.write("Loading player seasons...")
         created = skipped = missing_player = missing_team = 0
 
-        PlayerSeason.objects.all().delete()
-        self.stdout.write("Cleared existing player seasons.")
-
         self.stdout.write("Pre-caching players and teams...")
         player_cache = {p.player_id: p.id for p in Player.objects.only("id", "player_id")}
         team_cache = {(t.abbreviation, t.league): t.id for t in Team.objects.only("id", "abbreviation", "league")}
@@ -134,12 +131,40 @@ class Command(BaseCommand):
                 created += 1
 
                 if len(batch) >= BATCH_SIZE:
-                    PlayerSeason.objects.bulk_create(batch)
-                    self.stdout.write(f"Inserted {created} seasons so far...")
+                    PlayerSeason.objects.bulk_create(
+                            batch,
+                            update_conflicts=True,
+                            unique_fields=["player_id", "team_id", "season_year", "league"],
+                            update_fields=[
+                                "age", "games_played", "games_started",
+                                "minutes_per_game", "points_per_game",
+                                "rebounds_per_game", "assists_per_game",
+                                "steals_per_game", "blocks_per_game",
+                                "turnovers_per_game", "field_goal_percentage",
+                                "three_point_percentage", "free_throw_percentage",
+                                "player_efficiency_rating", "true_shooting_percentage",
+                                "win_shares", "box_plus_minus", "value_over_replacement",
+                            ],
+                        )
+                    self.stdout.write(f"Upserted {created} seasons so far...")
                     batch.clear()
 
         if batch:
-            PlayerSeason.objects.bulk_create(batch)
+            PlayerSeason.objects.bulk_create(
+                    batch,
+                    update_conflicts=True,
+                    unique_fields=["player_id", "team_id", "season_year", "league"],
+                    update_fields=[
+                        "age", "games_played", "games_started",
+                        "minutes_per_game", "points_per_game",
+                        "rebounds_per_game", "assists_per_game",
+                        "steals_per_game", "blocks_per_game",
+                        "turnovers_per_game", "field_goal_percentage",
+                        "three_point_percentage", "free_throw_percentage",
+                        "player_efficiency_rating", "true_shooting_percentage",
+                        "win_shares", "box_plus_minus", "value_over_replacement",
+                    ],
+                )
 
         # Enrich player positions from per-game CSV
         self.stdout.write("Enriching player positions...")
@@ -161,7 +186,7 @@ class Command(BaseCommand):
         self.stdout.write(f"Updated positions for {position_updates} players.")
 
         self.stdout.write(self.style.SUCCESS(
-            f"Done. Created: {created} | Skipped/duplicate: {skipped} | "
+            f"Done. Upserted: {created} | Skipped/duplicate: {skipped} | "
             f"Missing player: {missing_player} | Missing team: {missing_team}"
         ))
 

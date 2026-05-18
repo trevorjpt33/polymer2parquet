@@ -37,9 +37,6 @@ class Command(BaseCommand):
                 self.stderr.write(f"File not found: {path}")
                 return
 
-        Award.objects.all().delete()
-        self.stdout.write("Cleared existing awards.")
-
         created = skipped = 0
 
         # --- All-Star Selections ---
@@ -60,17 +57,18 @@ class Command(BaseCommand):
                     skipped += 1
                     continue
 
-                _, was_created = Award.objects.get_or_create(
+                _, was_created = Award.objects.update_or_create(
                     player=player,
                     award_type="ALL_STAR",
                     season_year=season_year,
                     league=league,
+                    defaults={},
                 )
                 if was_created:
                     created += 1
                 else:
                     self.stdout.write(
-                        self.style.WARNING(f"Skipped {player_id} | {season_year} | {league} {award_type}.")
+                        self.style.WARNING(f"Skipped {player_id} | {season_year} | {league} ALL_STAR.")
                     )
                     skipped += 1
 
@@ -121,11 +119,12 @@ class Command(BaseCommand):
                     skipped += 1
                     continue
 
-                _, was_created = Award.objects.get_or_create(
+                _, was_created = Award.objects.update_or_create(
                     player=player,
                     award_type=award_type,
                     season_year=season_year,
                     league=league,
+                    defaults={},
                 )
                 if was_created:
                     created += 1
@@ -179,11 +178,12 @@ class Command(BaseCommand):
                     skipped += 1
                     continue
 
-                _, was_created = Award.objects.get_or_create(
+                _, was_created = Award.objects.update_or_create(
                     player=player,
                     award_type=award_type,
                     season_year=season_year,
                     league=league,
+                    defaults={},
                 )
                 if was_created:
                     created += 1
