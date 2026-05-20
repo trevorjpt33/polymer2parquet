@@ -18,6 +18,13 @@ class Team(models.Model):
     # For franchises that moved or were renamed
     previous_name = models.CharField(max_length=100, blank=True)
     previous_city = models.CharField(max_length=100, blank=True)
+    successor = models.ForeignKey(
+        "self",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name="predecessor"
+    )
 
     class Meta:
         ordering = ["league", "city", "name"]
