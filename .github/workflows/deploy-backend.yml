@@ -86,6 +86,6 @@ jobs:
               repo: context.repo.repo,
               title: `🚨 Backend security scan failed on commit ${context.sha.slice(0, 7)}`,
               body: `A security scan step failed in the backend CI/CD pipeline.\n\n**Commit:** ${context.sha}\n**Run:** ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n\nPlease investigate and resolve before the next deployment.`,
-              labels: ['bug']
+              labels: ['bug'],
               assignees: ['trevorjpt33']
             })
