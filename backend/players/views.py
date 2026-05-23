@@ -4,6 +4,7 @@ from rest_framework.response import Response
 from django.db.models import Q
 from .models import Player, Award
 from .serializers import PlayerSerializer, PlayerListSerializer, AwardSerializer
+from championships.serializers import PlayerChampionshipSerializer
 
 
 class PlayerViewSet(viewsets.ModelViewSet):
@@ -84,6 +85,13 @@ class PlayerViewSet(viewsets.ModelViewSet):
         player = self.get_object()
         seasons = player.seasons.all().order_by("season_year")
         serializer = PlayerSeasonListSerializer(seasons, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=["get"])
+    def championships(self, request, pk=None):
+        player = self.get_object()
+        championships = player.championships.all().order_by("championship__season_year")
+        serializer = PlayerChampionshipSerializer(championships, many=True)
         return Response(serializer.data)
 
 

@@ -3,6 +3,7 @@ from rest_framework.decorators import action
 from rest_framework.response import Response
 from .models import Team
 from .serializers import TeamSerializer, TeamListSerializer
+from championships.serializers import ChampionshipSerializer
 
 
 class TeamViewSet(viewsets.ModelViewSet):
@@ -39,4 +40,11 @@ class TeamViewSet(viewsets.ModelViewSet):
         if season_year:
             seasons = seasons.filter(season_year=season_year)
         serializer = PlayerSeasonListSerializer(seasons, many=True)
+        return Response(serializer.data)
+    
+    @action(detail=True, methods=["get"])
+    def championships(self, request, pk=None):
+        team = self.get_object()
+        championships = team.championships.all().order_by("season_year")
+        serializer = ChampionshipSerializer(championships, many=True)
         return Response(serializer.data)
