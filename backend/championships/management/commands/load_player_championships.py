@@ -24,9 +24,9 @@ class Command(BaseCommand):
                 if was_created:
                     created += 1
                 else:
-                    skipped += 1
+                    updated += 1
 
         self.stdout.write(self.style.SUCCESS(
-                f"Done. Created: {created} | Updated {updated}"
+                f"Done. Created: {created} | Updated: {updated}"
             )
         )
