@@ -53,3 +53,33 @@
     - name: Print load_awards output
       debug:
         msg: "{{ load_awards_output.stdout_lines }}"
+
+    - name: Run set_franchise_successors
+      shell: |
+        kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
+          -- python manage.py set_franchise_successors 2>&1
+      register: set_franchise_successors_output
+
+    - name: Print set_franchise_successors output
+      debug:
+        msg: "{{ set_franchise_successors_output.stdout_lines }}"
+
+    - name: Run load_championships
+      shell: |
+        kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
+          -- python manage.py load_championships 2>&1
+      register: load_championships_output
+
+    - name: Print load_championships output
+      debug:
+        msg: "{{ load_championships_output.stdout_lines }}"
+
+    - name: Run load_player_championships
+      shell: |
+        kubectl exec -n {{ k8s_namespace }} {{ backend_pod.stdout }} \
+          -- python manage.py load_player_championships 2>&1
+      register: load_player_championships_output
+
+    - name: Print load_player_championships output
+      debug:
+        msg: "{{ load_player_championships_output.stdout_lines }}"
