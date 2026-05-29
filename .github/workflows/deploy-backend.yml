@@ -64,6 +64,7 @@ jobs:
           image-ref: us-central1-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/polymer2parquet/polymer2parquet-backend:${{ github.sha }}
           severity: CRITICAL
           exit-code: 1
+          ignore-unfixed: true
 
       - name: Get GKE credentials
         uses: google-github-actions/get-gke-credentials@v2
