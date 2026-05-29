@@ -6,8 +6,16 @@ from players.models import Player
 
 RATE_LIMITED = "RATE_LIMITED"
 
+# Manual overrides for players not found on Basketball Reference
+MANUAL_OVERRIDES = {
+    "leedi01": "United States",
+}
+
 
 def get_country(player_id, scraper):
+    if player_id in MANUAL_OVERRIDES:
+        return MANUAL_OVERRIDES[player_id]
+
     first_letter = player_id[0]
     url = f"https://www.basketball-reference.com/players/{first_letter}/{player_id}.html"
     try:
@@ -107,6 +115,8 @@ class Command(BaseCommand):
                     self.stdout.write(
                         f"  No country found: {player.first_name} {player.last_name} ({player.player_id})"
                     )
+                    player.country = "Unknown"
+                    player.save(update_fields=["country"])
                     skipped += 1
 
                 time.sleep(4)
