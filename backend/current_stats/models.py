@@ -45,6 +45,7 @@ class CurrentSeasonStats(models.Model):
     class Meta:
         ordering = ["player", "team"]
         unique_together = ["player", "season_year"]
+        verbose_name_plural = "Current season stats"
 
     def __str__(self):
         return f"{self.player} - {self.team.abbreviation if self.team else 'No Team'} {self.season_year}"
